@@ -1,0 +1,12 @@
+{
+    "Keys": ["mapsforge"],
+    "Provider": "mapsforge",
+    "Version": 100,
+    "Experimental": false,
+    "Features": [
+        "OnlineMappingFeature",
+        "OnlineGeocodingFeature",
+        "ReverseGeocodingFeature",
+        "OnlineRoutingFeature"
+    ]
+}
