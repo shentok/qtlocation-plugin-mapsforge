@@ -1,0 +1,4 @@
+[submodule "libqmapsforge"]
+	path = libqmapsforge
+	url = https://github.com/shentok/libqmapsforge.git
+	branch = master

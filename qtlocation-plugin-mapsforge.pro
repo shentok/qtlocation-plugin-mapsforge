@@ -1,25 +1,11 @@
-TEMPLATE = lib
-CONFIG += plugin
-TARGET = qtgeoservices_mapsforge
-QT += location-private positioning-private network
-
-PLUGIN_TYPE = geoservices
-PLUGIN_CLASS_NAME = QGeoServiceProviderFactoryOsm
-#load(qt_plugin)
-
-HEADERS += \
-    qgeoserviceproviderpluginosm.h \
-    qgeotiledmappingmanagerengineosm.h \
-    qgeotilefetcherosm.h \
-    qgeomapreplyosm.h
+TEMPLATE = subdirs
 
 
-SOURCES += \
-    qgeoserviceproviderpluginosm.cpp \
-    qgeotiledmappingmanagerengineosm.cpp \
-    qgeotilefetcherosm.cpp \
-    qgeomapreplyosm.cpp
+SUBDIRS += \
+    libqmapsforge \
+    plugin
 
-OTHER_FILES += \
-    mapsforge_plugin.json
+plugin.depends = libqmapsforge
+plugin.file = plugin.pro
 
+libqmapsforge.file = libqmapsforge/libqmapsforge.pro
