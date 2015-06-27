@@ -38,6 +38,11 @@
 
 QT_BEGIN_NAMESPACE
 
+QGeoServiceProviderFactoryOsm::QGeoServiceProviderFactoryOsm()
+{
+    Q_INIT_RESOURCE(osmarender);
+}
+
 QGeoCodingManagerEngine *QGeoServiceProviderFactoryOsm::createGeocodingManagerEngine(
     const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {

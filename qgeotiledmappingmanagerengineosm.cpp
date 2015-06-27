@@ -34,32 +34,88 @@
 #include "qgeotiledmappingmanagerengineosm.h"
 #include "qgeotilefetcherosm.h"
 
+#include <osmarender/RenderTheme.h>
+#include <osmarender/RenderThemeHandler.h>
+
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtLocation/private/qgeotiledmapdata_p.h>
 
+#include <QFile>
+#include <QFileInfo>
+#include <QXmlInputSource>
+#include <QXmlSimpleReader>
+
 QT_BEGIN_NAMESPACE
 
-QGeoTiledMappingManagerEngineOsm::QGeoTiledMappingManagerEngineOsm(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
-:   QGeoTiledMappingManagerEngine()
+QGeoTiledMappingManagerEngineOsm::QGeoTiledMappingManagerEngineOsm(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) :
+    QGeoTiledMappingManagerEngine()
 {
+    setCacheHint(MemoryCache);
+
     QGeoCameraCapabilities cameraCaps;
     cameraCaps.setMinimumZoomLevel(0.0);
-    cameraCaps.setMaximumZoomLevel(18.0);
+    cameraCaps.setMaximumZoomLevel(20.0);
     setCameraCapabilities(cameraCaps);
 
     setTileSize(QSize(256, 256));
 
     QList<QGeoMapType> mapTypes;
     mapTypes << QGeoMapType(QGeoMapType::StreetMap, tr("Street Map"), tr("OpenStreetMap street map"), false, false, 1);
-    mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay, tr("Satellite Map"), tr("OpenStreetMap satellite map"), false, false, 2);
     setSupportedMapTypes(mapTypes);
 
-    QGeoTileFetcherOsm *tileFetcher = new QGeoTileFetcherOsm(this);
-    if (parameters.contains(QStringLiteral("useragent"))) {
-        const QByteArray ua = parameters.value(QStringLiteral("useragent")).toString().toLatin1();
-        tileFetcher->setUserAgent(ua);
+    if (!parameters.contains(QStringLiteral("map"))) {
+        *error = QGeoServiceProvider::MissingRequiredParameterError;
+        *errorString = QStringLiteral("no \"map\" parameter specified");
+
+        return;
     }
+
+    QStringList stylePaths;
+    if (parameters.contains(QStringLiteral("style"))) {
+        const QString stylePath = parameters.value(QStringLiteral("style")).toString();
+        stylePaths << stylePath;
+    }
+    stylePaths << QStringLiteral(":/osmarender/style.xml");
+
+    RenderTheme *renderTheme = 0;
+    foreach (const QString &stylePath, stylePaths) {
+        QFile styleFile(stylePath);
+        if (!styleFile.open(QFile::ReadOnly)) {
+            qWarning() << "could not open style file" << styleFile.fileName();
+            continue;
+        }
+
+        const QString canonicalStylePath = QFileInfo(stylePath).canonicalPath();
+        RenderThemeHandler renderThemeHandler(canonicalStylePath);
+        QXmlInputSource source(&styleFile);
+        QXmlSimpleReader xmlReader;
+        xmlReader.setContentHandler(&renderThemeHandler);
+        xmlReader.setErrorHandler(&renderThemeHandler);
+        xmlReader.parse(&source);
+        renderTheme = renderThemeHandler.releaseRenderTheme();
+
+        if (renderTheme != 0)
+            break;
+    }
+
+    if (renderTheme == 0) {
+        *error = QGeoServiceProvider::MissingRequiredParameterError;
+        *errorString = QStringLiteral("no render theme found, not even the built-in one");
+        return;
+    }
+
+    const QString mapFilePath = parameters.value(QStringLiteral("map")).toString();
+    QFile *mapDatabase = new QFile(mapFilePath);
+    if (!mapDatabase->open(QFile::ReadOnly)) {
+        *error = QGeoServiceProvider::MissingRequiredParameterError;
+        *errorString = "Unable to open " + mapFilePath + " for reading.";
+        delete renderTheme;
+        delete mapDatabase;
+        return;
+    }
+
+    QGeoTileFetcherOsm *tileFetcher = new QGeoTileFetcherOsm(mapDatabase, renderTheme);
 
     setTileFetcher(tileFetcher);
 

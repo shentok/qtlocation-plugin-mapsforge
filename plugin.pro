@@ -11,9 +11,10 @@ INCLUDEPATH += \
     libqmapsforge
 
 LIBS += \
-    -Llibqmapsforge/mapsforgereader -lmapsforgereader \
-    -Llibqmapsforge/osmarender -losmarender \
-    -Llibqmapsforge/mapsforgerenderer/ -lmapsforgerenderer
+    -Llibqmapsforge/mapsforgereader \
+    -Llibqmapsforge/osmarender \
+    -Llibqmapsforge/mapsforgerenderer \
+    -Wl,-whole-archive -lmapsforgereader -losmarender -lmapsforgerenderer -Wl,-no-whole-archive
 
 HEADERS += \
     qgeoserviceproviderpluginosm.h \

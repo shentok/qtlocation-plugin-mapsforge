@@ -47,6 +47,8 @@ class QGeoServiceProviderFactoryOsm: public QObject, public QGeoServiceProviderF
                       FILE "mapsforge_plugin.json")
 
 public:
+    QGeoServiceProviderFactoryOsm();
+
     QGeoCodingManagerEngine *createGeocodingManagerEngine(const QVariantMap &parameters,
                                                           QGeoServiceProvider::Error *error,
                                                           QString *errorString) const;

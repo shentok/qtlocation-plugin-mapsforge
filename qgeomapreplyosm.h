@@ -34,8 +34,9 @@
 #ifndef QGEOMAPREPLYOSM_H
 #define QGEOMAPREPLYOSM_H
 
-#include <QtNetwork/QNetworkReply>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
+
+class QImage;
 
 QT_BEGIN_NAMESPACE
 
@@ -44,20 +45,11 @@ class QGeoMapReplyOsm : public QGeoTiledMapReply
     Q_OBJECT
 
 public:
-    explicit QGeoMapReplyOsm(QNetworkReply *reply, const QGeoTileSpec &spec, QObject *parent = 0);
+    explicit QGeoMapReplyOsm(const QGeoTileSpec &spec, QObject *parent = 0);
     ~QGeoMapReplyOsm();
 
-    void abort();
-
-    QNetworkReply *networkReply() const;
-
-private Q_SLOTS:
-    void replyDestroyed();
-    void networkReplyFinished();
-    void networkReplyError(QNetworkReply::NetworkError error);
-
-private:
-    QNetworkReply *m_reply;
+public Q_SLOTS:
+    void setTile(int x, int y, int zoom, const QImage &image);
 };
 
 QT_END_NAMESPACE

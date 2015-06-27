@@ -33,80 +33,40 @@
 
 #include "qgeomapreplyosm.h"
 
+#include <QBuffer>
+#include <QImage>
+#include <QImageWriter>
 #include <QtLocation/private/qgeotilespec_p.h>
 
-QGeoMapReplyOsm::QGeoMapReplyOsm(QNetworkReply *reply, const QGeoTileSpec &spec, QObject *parent)
-:   QGeoTiledMapReply(spec, parent), m_reply(reply)
+QGeoMapReplyOsm::QGeoMapReplyOsm(const QGeoTileSpec &spec, QObject *parent) :
+    QGeoTiledMapReply(spec, parent)
 {
-    connect(m_reply, SIGNAL(finished()), this, SLOT(networkReplyFinished()));
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
-            this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
-    connect(m_reply, SIGNAL(destroyed()), this, SLOT(replyDestroyed()));
 }
 
 QGeoMapReplyOsm::~QGeoMapReplyOsm()
 {
-    if (m_reply) {
-        m_reply->deleteLater();
-        m_reply = 0;
-    }
 }
 
-void QGeoMapReplyOsm::abort()
+void QGeoMapReplyOsm::setTile(int x, int y, int zoom, const QImage &image)
 {
-    if (!m_reply)
+    if (tileSpec().x() != x)
         return;
 
-    m_reply->abort();
-}
-
-QNetworkReply *QGeoMapReplyOsm::networkReply() const
-{
-    return m_reply;
-}
-
-void QGeoMapReplyOsm::replyDestroyed()
-{
-    m_reply = 0;
-}
-
-void QGeoMapReplyOsm::networkReplyFinished()
-{
-    if (!m_reply)
+    if (tileSpec().y() != y)
         return;
 
-    if (m_reply->error() != QNetworkReply::NoError)
+    if (tileSpec().zoom() != zoom)
         return;
 
-    QByteArray a = m_reply->readAll();
+    QByteArray a;
+    QBuffer b;
+    b.setBuffer(&a);
+    b.open(QBuffer::WriteOnly);
+    QImageWriter writer(&b, "png");
+    writer.write(image);
 
     setMapImageData(a);
-    switch (tileSpec().mapId()) {
-    case 1:
-        setMapImageFormat("png");
-        break;
-    case 2:
-        setMapImageFormat("png");
-        break;
-    default:
-        qWarning("Unknown map id %d", tileSpec().mapId());
-    }
+    setMapImageFormat("png");
 
     setFinished(true);
-
-    m_reply->deleteLater();
-    m_reply = 0;
-}
-
-void QGeoMapReplyOsm::networkReplyError(QNetworkReply::NetworkError error)
-{
-    if (!m_reply)
-        return;
-
-    if (error != QNetworkReply::OperationCanceledError)
-        setError(QGeoTiledMapReply::CommunicationError, m_reply->errorString());
-
-    setFinished(true);
-    m_reply->deleteLater();
-    m_reply = 0;
 }

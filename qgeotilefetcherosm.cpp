@@ -34,50 +34,37 @@
 #include "qgeotilefetcherosm.h"
 #include "qgeomapreplyosm.h"
 
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
 #include <QtLocation/private/qgeotilespec_p.h>
 
 QT_BEGIN_NAMESPACE
 
-QGeoTileFetcherOsm::QGeoTileFetcherOsm(QObject *parent)
-:   QGeoTileFetcher(parent), m_networkManager(new QNetworkAccessManager(this)),
-    m_userAgent("Qt Location based application")
+QGeoTileFetcherOsm::QGeoTileFetcherOsm(QIODevice *mapDevice, RenderTheme *renderTheme, QObject *parent) :
+    QGeoTileFetcher(parent),
+    m_tileFactory(mapDevice, renderTheme)
 {
-}
-
-void QGeoTileFetcherOsm::setUserAgent(const QByteArray &userAgent)
-{
-    m_userAgent = userAgent;
 }
 
 QGeoTiledMapReply *QGeoTileFetcherOsm::getTileImage(const QGeoTileSpec &spec)
 {
-    QNetworkRequest request;
-    request.setRawHeader("User-Agent", m_userAgent);
-
     switch (spec.mapId()) {
         case 1:
+#if 0
             // opensteetmap.org street map
             request.setUrl(QUrl(QStringLiteral("http://otile1.mqcdn.com/tiles/1.0.0/map/") +
                                 QString::number(spec.zoom()) + QLatin1Char('/') +
                                 QString::number(spec.x()) + QLatin1Char('/') +
                                 QString::number(spec.y()) + QStringLiteral(".png")));
-            break;
-        case 2:
-            // opensteetmap.org satellite map
-            request.setUrl(QUrl(QStringLiteral("http://otile1.mqcdn.com/tiles/1.0.0/sat/") +
-                                QString::number(spec.zoom()) + QLatin1Char('/') +
-                                QString::number(spec.x()) + QLatin1Char('/') +
-                                QString::number(spec.y()) + QStringLiteral(".png")));
+#endif
             break;
         default:
             qWarning("Unknown map id %d\n", spec.mapId());
     }
 
-    QNetworkReply *reply = m_networkManager->get(request);
+    const QImage image = m_tileFactory.createTile(spec.x(), spec.y(), spec.zoom(), 1);
+    QGeoMapReplyOsm *reply = new QGeoMapReplyOsm(spec);
+    reply->setTile(spec.x(), spec.y(), spec.zoom(), image);
 
-    return new QGeoMapReplyOsm(reply, spec);
+    return reply;
 }
 
 QT_END_NAMESPACE

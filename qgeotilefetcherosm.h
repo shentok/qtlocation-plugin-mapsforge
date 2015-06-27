@@ -36,25 +36,28 @@
 
 #include <QtLocation/private/qgeotilefetcher_p.h>
 
-QT_BEGIN_NAMESPACE
+#include <mapsforgerenderer/util/TileFactory.h>
 
-class QGeoTiledMappingManagerEngine;
-class QNetworkAccessManager;
+class QIODevice;
+class RenderTheme;
+
+QT_BEGIN_NAMESPACE
 
 class QGeoTileFetcherOsm : public QGeoTileFetcher
 {
     Q_OBJECT
 
 public:
-    QGeoTileFetcherOsm(QObject *parent = 0);
+    QGeoTileFetcherOsm(QIODevice *mapDevice, RenderTheme *renderTheme, QObject *parent = 0);
 
-    void setUserAgent(const QByteArray &userAgent);
+Q_SIGNALS:
+    void tileLoaded(int x, int y, int zoom, const QImage &image);
 
-private:
+protected:
     QGeoTiledMapReply *getTileImage(const QGeoTileSpec &spec);
 
-    QNetworkAccessManager *m_networkManager;
-    QByteArray m_userAgent;
+private:
+    Mapsforge::TileFactory m_tileFactory;
 };
 
 QT_END_NAMESPACE

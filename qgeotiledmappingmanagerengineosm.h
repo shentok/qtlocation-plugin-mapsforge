@@ -47,6 +47,7 @@ class QGeoTiledMappingManagerEngineOsm : public QGeoTiledMappingManagerEngine
 public:
     QGeoTiledMappingManagerEngineOsm(const QVariantMap &parameters,
                                      QGeoServiceProvider::Error *error, QString *errorString);
+
     ~QGeoTiledMappingManagerEngineOsm();
 
     QGeoMapData *createMapData();
